@@ -1,0 +1,144 @@
++--------------------+
+|       User        |
++--------------------+
+| - id: int         |
+| - name: String    |
+| - email: String   |
++--------------------+
+| + viewProducts()  |
++--------------------+
+        |
+        | (inherits)
+        |
++-------------------+         +------------------+
+|  Customer        |         |    Admin         |
++-------------------+         +------------------+
+| + placeOrder()   |         | + manageStock()  |
++-------------------+         +------------------+
+
++----------------------+
+|      Product        |
++----------------------+
+| - id: int           |
+| - name: String      |
+| - price: double     |
+| - stock: int        |
+| - category: ProductCategory |
++----------------------+
+| + updateStock()     |
++----------------------+
+
++------------------------+
+|  InventoryManager      |
++------------------------+
+| - warehouses: Map<>    |
+| - warehouseStrategy: WarehouseSelectionStrategy |
++------------------------+
+| + addWarehouse()       |
+| + selectWarehouse()    |
+| + setWarehouseStrategy() |
++------------------------+
+
++----------------------+
+|      Warehouse      |
++----------------------+
+| - id: int           |
+| - location: String  |
+| - warehouseInventory: Map<> |
++----------------------+
+| + addProduct()      |
+| + removeProduct()   |
++----------------------+
+
++---------------------------------+
+| WarehouseSelectionStrategy      |
++---------------------------------+
+| + selectWarehouse(Map)          |
++---------------------------------+
+        |
+        | (inherits)
+        |
++-------------------------------+
+| NearestWarehouseStrategy      |
++-------------------------------+
+| + selectWarehouse()           |
++-------------------------------+
+
++----------------------+
+|   ProductCategory    |
++----------------------+
+| - id: int           |
+| - name: String      |
+| - description: String |
++----------------------+
+
++----------------------+
+|   ProductFactory    |
++----------------------+
+| + createProduct()   |
++----------------------+
+
++--------------------+
+|      Order        |
++--------------------+
+| - id: int         |
+| - customer: User  |
+| - items: List<>   |
+| - status: OrderStatus |
++--------------------+
+| + calculateTotal()|
+| + generateInvoice() |
++--------------------+
+
++--------------------+
+|    OrderItem      |
++--------------------+
+| - product: Product|
+| - quantity: int   |
++--------------------+
+
++--------------------+
+|   OrderStatus     |
++--------------------+
+| PENDING           |
+| PROCESSING        |
+| SHIPPED           |
+| DELIVERED         |
+| CANCELED          |
++--------------------+
+
++--------------------+
+|     Invoice       |
++--------------------+
+| - id: int         |
+| - order: Order    |
+| - totalAmount: double |
++--------------------+
+| + generateInvoice() |
++--------------------+
+
++--------------------------------+
+|   Observer (StockListener)    |
++--------------------------------+
+| + onStockUpdated()            |
++--------------------------------+
+
++----------------------+
+|   AdminNotifier     |
++----------------------+
+| + onStockUpdated()  |
++----------------------+
+
++----------------------+
+|      Payment        |   (Interface)
++----------------------+
+| + processPayment()  |
++----------------------+
+        |
+        | (implements)
+        |
++----------------------+    +----------------------+
+| CreditCardPayment   |    |  PayPalPayment       |
++----------------------+    +----------------------+
+| + processPayment()  |    | + processPayment()  |
++----------------------+    +----------------------+
