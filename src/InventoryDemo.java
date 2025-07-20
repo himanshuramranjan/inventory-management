@@ -28,9 +28,9 @@ public class InventoryDemo {
         alertingService.registerThreshold(pencil.getProductId(), 20);
         alertingService.registerThreshold(notebook.getProductId(), 10);
 
-        AlertObserver pencilObserver = new AlertObserverImpl(new ConsoleAlertStrategy());
-        alertingService.addObserver(pencil.getProductId(), pencilObserver);
-        alertingService.addObserver(notebook.getProductId(), pencilObserver); // Reusing same observer
+        AlertObserver observer = new AlertObserverImpl(new ConsoleAlertStrategy());
+        alertingService.addObserver(pencil.getProductId(), observer);
+        alertingService.addObserver(notebook.getProductId(), observer);
 
         // Step 4: Get InventoryService instance
         InventoryService inventoryService = InventoryService.getInstance(stockRepo);
