@@ -1,57 +1,65 @@
-import inventory.InventoryManager;
-import inventory.NearestWarehouseSelectionStrategy;
-import invoice.Invoice;
-import invoice.StandardInvoice;
-import models.*;
-import observer.AdminNotifier;
-import payment.CreditCardPayment;
-import payment.Payment;
+import models.Product;
+import models.Warehouse;
+import models.repository.InMemoryStockRepository;
+import models.repository.StockRepository;
+import service.InventoryService;
+import service.observer.AlertObserver;
+import service.observer.AlertObserverImpl;
+import service.observer.AlertingService;
+import service.strategy.ConsoleAlertStrategy;
 
-public class Main {
+import java.util.Map;
+import java.util.UUID;
+
+public class InventoryDemo {
     public static void main(String[] args) {
+        // Step 1: Create Product and Warehouse
+        Product pencil = new Product(UUID.randomUUID(), "Pencil", "SKU123", "Stationery", 5.0);
+        Product notebook = new Product(UUID.randomUUID(), "Notebook", "SKU456", "Stationery", 50.0);
 
-        initialize();
+        Warehouse warehouseA = new Warehouse(UUID.randomUUID(), "Warehouse-A", "Delhi");
+        Warehouse warehouseB = new Warehouse(UUID.randomUUID(), "Warehouse-B", "Mumbai");
 
-        // Set up inventory system
-        InventoryManager inventory = InventoryManager.getInstance();
-        inventory.setWarehouseSelectionStrategy(new NearestWarehouseSelectionStrategy());
+        // Step 2: Create and configure repository and alert system
+        StockRepository stockRepo = new InMemoryStockRepository();
+        AlertingService alertingService = AlertingService.getInstance();
 
-        // Create customer
-        Customer customer = new Customer(1, "Alice", "alice@example.com");
-        Order order = new Order(customer);
+        // Step 3: Register low stock thresholds and observers
+        alertingService.registerThreshold(pencil.getProductId(), 20);
+        alertingService.registerThreshold(notebook.getProductId(), 10);
 
-        Warehouse warehouse = inventory.getWareHouse();
-        System.out.println("Products available " + warehouse.getWarehouseInventory());
+        AlertObserver pencilObserver = new AlertObserverImpl(new ConsoleAlertStrategy());
+        alertingService.addObserver(pencil.getProductId(), pencilObserver);
+        alertingService.addObserver(notebook.getProductId(), pencilObserver); // Reusing same observer
 
+        // Step 4: Get InventoryService instance
+        InventoryService inventoryService = InventoryService.getInstance(stockRepo);
 
-        order.addItem("101", 1);
-        order.addItem("102", 2);
+        // Step 5: Add stock
+        System.out.println("\n--- Adding Initial Stock ---");
+        inventoryService.addStock(pencil, warehouseA, 25);  // no alert
+        inventoryService.addStock(notebook, warehouseA, 12); // no alert
 
-        // place an order and Process payment
-        Payment paymentMethod = new CreditCardPayment();
-        customer.placeOrder(order, paymentMethod, warehouse);
+        // Step 6: Remove stock (will trigger alert)
+        System.out.println("\n--- Removing Stock ---");
+        inventoryService.removeStock(pencil, warehouseA, 10);  // qty = 15 < threshold → alert
+        inventoryService.removeStock(notebook, warehouseA, 3); // qty = 9 < threshold → alert
 
-        // Generate invoice
-        Invoice invoice = new StandardInvoice();
-        invoice.generateInvoice(order);
+        // Step 7: Transfer stock between warehouses
+        System.out.println("\n--- Transferring Stock ---");
+        inventoryService.transferStock(pencil, warehouseA, warehouseB, 5); // pencil qty: A=10, B=5
 
+        // Step 8: Check final stock
+        System.out.println("\n--- Final Stock State ---");
+        printStock(inventoryService, pencil);
+        printStock(inventoryService, notebook);
     }
 
-    private static void initialize() {
-
-        InventoryManager inventory = InventoryManager.getInstance();
-        inventory.addStockListener(new AdminNotifier());
-
-        // Create category and products
-        ProductCategory electronics = new ProductCategory("1", "Electronics");
-        electronics.setDescription("Electronics items");
-        Product laptop = new Product("101", "Laptop", 800.0, electronics);
-        Product phone = new Product("102", "Smartphone", 500.0, electronics);
-
-        // Create warehouse and add products
-        Warehouse warehouse = new Warehouse("W01", "New York");
-        inventory.addWarehouse(warehouse);
-        warehouse.addProduct(laptop, 10);
-        warehouse.addProduct(phone, 15);
+    private static void printStock(InventoryService service, Product product) {
+        Map<Warehouse, Integer> stockMap = service.getStock(product);
+        System.out.println("Product: " + product.getName());
+        stockMap.forEach((warehouse, qty) -> {
+            System.out.println("  Warehouse: " + warehouse.getName() + " | Qty: " + qty);
+        });
     }
 }
