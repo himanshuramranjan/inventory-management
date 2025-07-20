@@ -1,19 +1,22 @@
 package models;
+import java.util.UUID;
 
 public class Product {
-    private final String productId;
-    private String name;
-    private double price;
-    private ProductCategory productCategory;
+    private final UUID productId;
+    private final String name;
+    private final String sku;
+    private final String category;
+    private final double price;
 
-    public Product(String productId, String name, double price, ProductCategory productCategory) {
+    public Product(UUID productId, String name, String sku, String category, double price) {
         this.productId = productId;
         this.name = name;
+        this.sku = sku;
+        this.category = category;
         this.price = price;
-        this.productCategory = productCategory;
     }
 
-    public String getProductId() {
+    public UUID getProductId() {
         return productId;
     }
 
@@ -21,24 +24,5 @@ public class Product {
         return name;
     }
 
-    public double getPrice() {
-        return price;
-    }
-
-    public ProductCategory getProductCategory() {
-        return productCategory;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public void setProductCategory(ProductCategory productCategory) {
-        this.productCategory = productCategory;
-    }
-
+    // Getters for sku, category, price (if needed)
 }

@@ -1,46 +1,23 @@
 package models;
 
-import enums.OrderStatus;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 public class Warehouse {
-    private final String id;
-    private String location;
-    private Map<String, OrderItem> warehouseInventory;
+    private final UUID warehouseId;
+    private final String name;
+    private final String location;
 
-    public Warehouse(String id, String location) {
-        this.id = id;
+    public Warehouse(UUID warehouseId, String name, String location) {
+        this.warehouseId = warehouseId;
+        this.name = name;
         this.location = location;
-        this.warehouseInventory = new HashMap<>();
     }
 
-    public void addProduct(Product product, int quantity) {
-        warehouseInventory.put(product.getProductId(), new OrderItem(product, quantity));
+    public UUID getWarehouseId() {
+        return warehouseId;
     }
 
-    public void updateWarehouseInventory(Order order) {
-        for(String product : order.getItems().keySet()) {
-            OrderItem item = warehouseInventory.get(product);
-            int updateQuantity = item.getQuantity() - order.getItems().get(product);
-            if(updateQuantity < 0) {
-                order.setOrderStatus(OrderStatus.CANCELED);
-                return;
-            }
-            item.setQuantity(updateQuantity);
-        }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public Map<String, OrderItem> getWarehouseInventory() {
-        return warehouseInventory;
+    public String getName() {
+        return name;
     }
 }
