@@ -1,144 +1,124 @@
-+--------------------+
-|       User        |
-+--------------------+
-| - id: int         |
-| - name: String    |
-| - email: String   |
-+--------------------+
-| + viewProducts()  |
-+--------------------+
-        |
-        | (inherits)
-        |
-+-------------------+         +------------------+
-|  Customer        |         |    Admin         |
-+-------------------+         +------------------+
-| + placeOrder()   |         | + manageStock()  |
-+-------------------+         +------------------+
++------------------+
+|    Product       |
++------------------+
+| - productId: UUID|
+| - name: String   |
+| - sku: String    |
+| - category: String|
+| - price: double  |
++------------------+
+| + getProductId() |
+| + getName()      |
++------------------+
 
-+----------------------+
-|      Product        |
-+----------------------+
-| - id: int           |
-| - name: String      |
-| - price: double     |
-| - stock: int        |
-| - category: ProductCategory |
-+----------------------+
-| + updateStock()     |
-+----------------------+
++-----------------------+
+|    Warehouse          |
++-----------------------+
+| - warehouseId: UUID   |
+| - name: String        |
+| - location: String    |
++-----------------------+
+| + getWarehouseId()    |
+| + getName()           |
++-----------------------+
 
-+------------------------+
-|  InventoryManager      |
-+------------------------+
-| - warehouses: Map<>    |
-| - warehouseStrategy: WarehouseSelectionStrategy |
-+------------------------+
-| + addWarehouse()       |
-| + selectWarehouse()    |
-| + setWarehouseStrategy() |
-+------------------------+
+       ▲                              ▲
+       |                              |
+       |                              |
+       | 1                        1   |
+       |                              |
+       |                              |
+       |          +-----------------------------+
+       +----------|        StockEntry           |
+                  +-----------------------------+
+                  | - product: Product          |
+                  | - warehouse: Warehouse      |
+                  | - quantity: int             |
+                  | - lastUpdated: LocalDateTime|
+                  +-----------------------------+
+                  | + getQuantity()             |
+                  | + updateQuantity()          |
+                  +-----------------------------+
 
-+----------------------+
-|      Warehouse      |
-+----------------------+
-| - id: int           |
-| - location: String  |
-| - warehouseInventory: Map<> |
-+----------------------+
-| + addProduct()      |
-| + removeProduct()   |
-+----------------------+
+                             ▲
+                             | uses
+                             |
+                 +----------------------------+
+                 |     InventoryService       |   <== Singleton
+                 +----------------------------+
+                 | - repo: StockRepository    |
+                 | - alertingService: AlertingService |
+                 +----------------------------+
+                 | + addStock(...)            |
+                 | + removeStock(...)         |
+                 | + transferStock(...)       |
+                 | + getStock(...)            |
+                 +----------------------------+
 
-+---------------------------------+
-| WarehouseSelectionStrategy      |
-+---------------------------------+
-| + selectWarehouse(Map)          |
-+---------------------------------+
-        |
-        | (inherits)
-        |
-+-------------------------------+
-| NearestWarehouseStrategy      |
-+-------------------------------+
-| + selectWarehouse()           |
-+-------------------------------+
+                             |
+                             | uses
+                             v
+               +-----------------------------+
+               |  StockRepository (interface)|
+               +-----------------------------+
+               | + getStock(...)             |
+               | + updateStock(...)          |
+               | + getAllStockEntries()      |
+               +-----------------------------+
+                             ▲
+                             |
+                             | implements
+                             v
+               +-----------------------------+
+               |   InMemoryStockRepository   |   <== Singleton
+               +-----------------------------+
+               | - Map<Pair<prodId, whId>, entry> |
+               | - lock: ReentrantReadWriteLock    |
+               +-----------------------------+
 
-+----------------------+
-|   ProductCategory    |
-+----------------------+
-| - id: int           |
-| - name: String      |
-| - description: String |
-+----------------------+
++-------------------------+            +----------------------------+
+|    ProductService       |            |     WarehouseService       |   <== Both Singleton
++-------------------------+            +----------------------------+
+| - Map<UUID, Product>    |            | - Map<UUID, Warehouse>     |
++-------------------------+            +----------------------------+
+| + addProduct(...)       |            | + addWarehouse(...)        |
+| + updateProduct(...)    |            | + getWarehouse(...)        |
+| + getProduct(...)       |            +----------------------------+
++-------------------------+
 
-+----------------------+
-|   ProductFactory    |
-+----------------------+
-| + createProduct()   |
-+----------------------+
+                         ▲
+                         | uses
+                         v
+              +-----------------------------+
+              |     AlertingService         |   <== Singleton, Observable
+              +-----------------------------+
+              | - observers: List<ThresholdObserver>     |
+              | - thresholds: Map<UUID, Integer>         |
+              +-----------------------------+
+              | + registerThreshold(productId, limit)    |
+              | + checkAndTriggerAlerts(stockEntry)      |
+              | + addObserver(ThresholdObserver)         |
+              +-----------------------------+
 
-+--------------------+
-|      Order        |
-+--------------------+
-| - id: int         |
-| - customer: User  |
-| - items: List<>   |
-| - status: OrderStatus |
-+--------------------+
-| + calculateTotal()|
-| + generateInvoice() |
-+--------------------+
+                         ▲
+                         |
+                         |
+              +-----------------------------+
+              | ThresholdObserver (interface)|   <== Observer Pattern
+              +-----------------------------+
+              | + onThresholdBreached(...)   |
+              +-----------------------------+
 
-+--------------------+
-|    OrderItem      |
-+--------------------+
-| - product: Product|
-| - quantity: int   |
-+--------------------+
+                         ▲
+                         |
+              +------------------------------+
+              | EmailAlertStrategy           |   <== Concrete Observer (Strategy)
+              +------------------------------+
+              | + onThresholdBreached(...)   |
+              +------------------------------+
 
-+--------------------+
-|   OrderStatus     |
-+--------------------+
-| PENDING           |
-| PROCESSING        |
-| SHIPPED           |
-| DELIVERED         |
-| CANCELED          |
-+--------------------+
-
-+--------------------+
-|     Invoice       |
-+--------------------+
-| - id: int         |
-| - order: Order    |
-| - totalAmount: double |
-+--------------------+
-| + generateInvoice() |
-+--------------------+
-
-+--------------------------------+
-|   Observer (StockListener)    |
-+--------------------------------+
-| + onStockUpdated()            |
-+--------------------------------+
-
-+----------------------+
-|   AdminNotifier     |
-+----------------------+
-| + onStockUpdated()  |
-+----------------------+
-
-+----------------------+
-|      Payment        |   (Interface)
-+----------------------+
-| + processPayment()  |
-+----------------------+
-        |
-        | (implements)
-        |
-+----------------------+    +----------------------+
-| CreditCardPayment   |    |  PayPalPayment       |
-+----------------------+    +----------------------+
-| + processPayment()  |    | + processPayment()  |
-+----------------------+    +----------------------+
+              +------------------------------+
+              | SMSAlertStrategy             |   <== Another Strategy
+              +------------------------------+
+              | + onThresholdBreached(...)   |
+              +------------------------------+

@@ -1,0 +1,66 @@
+[InventoryDemo (Main Class)]
+        |
+        | 1. Create Product & Warehouse
+        |------------------------------->
+        |  new Product(...)   --> UUID
+        |  new Warehouse(...) --> UUID
+        |
+        | 2. Initialize services
+        |------------------------------->
+        |  InMemoryStockRepository()
+        |  AlertingService()
+        |  InventoryService.getInstance(repo, alerting)
+        |
+        | 3. Configure Alerts
+        |------------------------------->0
+        |  AlertingService.registerThreshold(productId, threshold)
+        |  AlertingService.addObserver(productId, observer)
+        |
+        | 4. Add Stock
+        |------------------------------->
+        | InventoryService.addStock(product, warehouse, qty)
+        |        |
+        |        |---> StockRepository.getStock(productId, warehouseId)
+        |        |         |
+        |        |         |---> returns existing StockEntry or null
+        |        |
+        |        |---> if null → create new StockEntry(product, warehouse, qty)
+        |        |         else → entry.addQuantity(qty)
+        |        |
+        |        |---> StockRepository.updateStock(entry)
+        |        |
+        |        |---> AlertingService.checkAndTriggerAlerts(product, currentQty)
+        |                        |
+        |                        |---> threshold registered?
+        |                        |         |
+        |                        |         |---> if (qty < threshold)
+        |                        |                   → call all registered observers
+        |                        |                          |
+        |                        |                          |---> observer.notify(product, qty)
+        |                        |                                      |
+        |                        |                                      |---> AlertStrategy.sendAlert()
+        |
+        | 5. Remove Stock
+        |------------------------------->
+        | InventoryService.removeStock(product, warehouse, qty)
+        |        |
+        |        |---> Same as above, but entry.removeQuantity(qty)
+        |        |---> AlertingService.checkAndTriggerAlerts(...)
+        |
+        | 6. Transfer Stock
+        |------------------------------->
+        | InventoryService.transferStock(product, fromWarehouse, toWarehouse, qty)
+        |        |
+        |        |---> removeStock(...)  // triggers alerts if threshold breached
+        |        |---> addStock(...)     // also triggers alerts
+        |
+        | 7. Query Stock
+        |------------------------------->
+        | InventoryService.getStock(product)
+        |        |
+        |        |---> StockRepository.getAllStockEntries()
+        |        |---> filter by productId → return (Warehouse → Qty) Map
+        |
+        | 8. Print Stock
+        |------------------------------->
+        | For each warehouse → print qty for product
