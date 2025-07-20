@@ -1,0 +1,15 @@
+> Why not store stock directly inside the Warehouse?
+
+You absolutely can do that in a small-scale or simplified system, by placing a map like Map<Product, Integer>
+inside each Warehouse. However, we intentionally decoupled it using a separate StockRepository for scalability,
+flexibility, and separation of concerns.
+
+| Aspect                              | Explanation                                                                                                                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Separation of Concerns (SRP)** | `Warehouse` should only store basic information like name, location. Managing stock is a **different responsibility**, better handled by a dedicated service/repository.                                            |
+| **2. Repository Pattern**           | Using `StockRepository` follows the **Repository Pattern**, which abstracts the data layer and provides loose coupling. You can switch between **in-memory**, **DB**, or **cache-based** repositories easily.       |
+| **3. Avoid Tight Coupling**         | If you store stock inside `Warehouse`, then both `InventoryService` and `AlertService` will tightly depend on `Warehouse`, creating **tight interdependency**.                                                      |
+| **4. Shared View Across Services**  | A separate repository provides a **global view** of stock across all warehouses, crucial for alerting, reporting, transfer, or analytics.                                                                           |
+| **5. Efficient Queries**            | Searching all warehouses for a particular product’s stock will be inefficient if stock is embedded. With a central repository, you can efficiently do `getStock(productId, warehouseId)` or `getAllStockEntries()`. |
+| **6. Extensibility**                | Later, you can add features like audit logs, stock aging, reservations, batch expiry, without modifying the `Warehouse` class.                                                                                      |
+
