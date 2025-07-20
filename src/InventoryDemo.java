@@ -42,7 +42,7 @@ public class InventoryDemo {
 
         // Step 6: Remove stock (will trigger alert)
         System.out.println("\n--- Removing Stock ---");
-        inventoryService.removeStock(pencil, warehouseA, 10);  // qty = 15 < threshold → alert
+        inventoryService.removeStock(pencil, warehouseA, 5);  // qty = 15 < threshold → alert
         inventoryService.removeStock(notebook, warehouseA, 3); // qty = 9 < threshold → alert
 
         // Step 7: Transfer stock between warehouses

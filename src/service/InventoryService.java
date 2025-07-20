@@ -44,7 +44,7 @@ public class InventoryService {
             entry.addQuantity(qty);
         }
         stockRepo.updateStock(entry);
-        alertingService.checkAndTriggerAlerts(product, entry.getQuantity());
+        alertingService.checkAndTriggerAlerts(product, warehouse, entry.getQuantity());
     }
 
     public synchronized void removeStock(Product product, Warehouse warehouse, int qty) {
@@ -52,7 +52,7 @@ public class InventoryService {
         if (entry == null) throw new IllegalArgumentException("Stock does not exist");
         entry.removeQuantity(qty);
         stockRepo.updateStock(entry);
-        alertingService.checkAndTriggerAlerts(product, entry.getQuantity());
+        alertingService.checkAndTriggerAlerts(product, warehouse, entry.getQuantity());
     }
 
     public synchronized void transferStock(Product product, Warehouse from, Warehouse to, int qty) {

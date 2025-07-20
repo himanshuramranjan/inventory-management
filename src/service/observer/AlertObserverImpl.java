@@ -1,6 +1,7 @@
 package service.observer;
 
 import models.Product;
+import models.Warehouse;
 import service.strategy.AlertStrategy;
 
 public class AlertObserverImpl implements AlertObserver {
@@ -11,7 +12,7 @@ public class AlertObserverImpl implements AlertObserver {
     }
 
     @Override
-    public void notify(Product product, int currentQty) {
-        strategy.sendAlert(product, currentQty);
+    public void notify(Product product, Warehouse warehouse, int currentQty) {
+        strategy.sendAlert(product, warehouse, currentQty);
     }
 }

@@ -1,6 +1,7 @@
 package service.observer;
 
 import models.Product;
+import models.Warehouse;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,13 +33,13 @@ public class AlertingService {
         observers.computeIfAbsent(productId, k -> new CopyOnWriteArrayList<>()).add(observer);
     }
 
-    public void checkAndTriggerAlerts(Product product, int currentQty) {
+    public void checkAndTriggerAlerts(Product product, Warehouse warehouse, int currentQty) {
         UUID productId = product.getProductId();
         Integer threshold = productThresholds.get(productId);
         if (threshold != null && currentQty < threshold) {
             List<AlertObserver> list = observers.getOrDefault(productId, Collections.emptyList());
             for (AlertObserver obs : list) {
-                obs.notify(product, currentQty);
+                obs.notify(product, warehouse, currentQty);
             }
         }
     }
